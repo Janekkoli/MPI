@@ -6,12 +6,23 @@
 #include "mimpi.h"
 #include "mimpi_common.h"
 
-
+#include <pthread.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+void* reciver(void* data)
+{
+    int from=*((int*)data);
+    free(data);
+    printf("%d \n", from);
+    return 0;
+}
+
+pthread_t *threads;
+
 
 void MIMPI_Init(bool enable_deadlock_detection) {
     channels_init();
@@ -22,13 +33,28 @@ void MIMPI_Init(bool enable_deadlock_detection) {
     rank=x;
 
 
+    //creating threads for every pipe
+    pthread_attr_t attr;
+    ASSERT_ZERO(pthread_attr_init(&attr));
+
+    threads=malloc(sizeof(pthread_t)*size);
+    for (int i = 0; i < size; i++) {
+        if(i==rank) continue;
+        int* arg = malloc(sizeof(int));
+        *arg = i;
+        ASSERT_ZERO(pthread_create(&threads[i], &attr, reciver, arg));
+    }
+
 }
 
 void MIMPI_Finalize() {
     //TODO
 
 
-
+    //killing threads not sure if it is nessecary 
+    //for(int i=0;i<size;i++)
+    //    if(i!=rank) pthread_cancel(threads[i]); 
+    free(threads);
     channels_finalize();
 }
 
