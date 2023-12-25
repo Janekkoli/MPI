@@ -49,7 +49,7 @@ _Noreturn void fatal(const char* fmt, ...)
 /////////////////////////////////////////////////
 // Put your implementation here
 
-int from_y_to_x(int from,int to)
+int from_y_to_x(int from,int to,bool wr)
 {
-    return 16*from+to+20;
+    return 16*from+to+24 + 300*wr;
 }

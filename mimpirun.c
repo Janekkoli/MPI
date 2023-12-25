@@ -22,19 +22,18 @@ int main(int argc, char* argv[]) {
     //setting chanels
     int pipefd[2];
     for(int i=0;i<size;i++)
-    {
-        ASSERT_SYS_OK(channel(pipefd));
-        //printf("%d %d \n",pipefd[0],pipefd[1]); //nie za dobrze :(
-        ASSERT_SYS_OK(dup2(pipefd[0],70));
-        ASSERT_SYS_OK(close(pipefd[0]));
-        ASSERT_SYS_OK(dup2(pipefd[1],71));
-        ASSERT_SYS_OK(close(pipefd[1]));
-        ASSERT_SYS_OK(dup2(70,MIMPI_recive_point+i));
-        ASSERT_SYS_OK(close(70));
-        ASSERT_SYS_OK(dup2(71,MIMPI_send_point+i));
-        ASSERT_SYS_OK(close(71));
-        
-    }
+        for(int i2=0;i2<size;i2++)
+        {
+            if(i2==i) continue;
+            ASSERT_SYS_OK(channel(pipefd)); //0 - read , 1 - write
+            ASSERT_SYS_OK(dup2(pipefd[0],from_y_to_x(i,i2,0)));
+            ASSERT_SYS_OK(close(pipefd[0]));
+            ASSERT_SYS_OK(dup2(pipefd[1],from_y_to_x(i,i2,1)));
+            ASSERT_SYS_OK(close(pipefd[1]));
+        }
+
+
+
     //printf("%d size\n", size);
     pid_t pid;
     for(int i=0;i<size;i++)
@@ -42,17 +41,15 @@ int main(int argc, char* argv[]) {
         ASSERT_SYS_OK(pid = fork());
         if(!pid) //child
         {
-
-
-            ASSERT_SYS_OK(dup2(MIMPI_recive_point+i,MIMPI_recive_point));
-            for(int i2=1;i2<size;i2++)
-                    ASSERT_SYS_OK(close(MIMPI_recive_point+i2));
-            
-            rank=i;
+            for(int i2=0;i2<size;i2++) //closing unused descriptors
+                for(int i3=0;i3<size;i3++)
+                    {if(i3==i2) continue;
+                    if(i3!=i) ASSERT_SYS_OK(close(from_y_to_x(i2,i3,0)));
+                    if(i2!=i) ASSERT_SYS_OK(close(from_y_to_x(i2,i3,1)));}
+            ASSERT_SYS_OK(dup2(from_y_to_x((i+1)%size,i,0),800));
             ASSERT_SYS_OK(execvp(argv[2],argv+2));
         }
-        int x=i;
-        ASSERT_SYS_OK(chsend(i+MIMPI_send_point,&x,sizeof(int)));
+        ASSERT_SYS_OK(chsend(from_y_to_x((i+1)%size,i,1),&i,sizeof(int)));
     }
 
 
@@ -71,6 +68,12 @@ int main(int argc, char* argv[]) {
         //     printf("Child %d exited abnormally.\n", i + 1);
         // }
     }
+
+    for(int i=0;i<size;i++)
+        for(int i2=0;i2<size;i2++)
+            if(i==i2) continue;
+            else {ASSERT_SYS_OK(close(from_y_to_x(i,i2,0)));ASSERT_SYS_OK(close(from_y_to_x(i,i2,1)));}
     channels_finalize();
     return 0;
+    //valgrind --tool=memcheck --leak-check=yes --track-origins=yes --track-fds=yes  ./mimpirun 16 examples_build/hello
 }

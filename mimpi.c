@@ -17,12 +17,17 @@ void MIMPI_Init(bool enable_deadlock_detection) {
     channels_init();
     size = atoi(getenv("MIMPI_size"));
     int x;
-    ASSERT_SYS_OK(chrecv(MIMPI_recive_point,&x,sizeof(int)));
+    ASSERT_SYS_OK(chrecv(800,&x,sizeof(int)));
+    ASSERT_SYS_OK(close(800));
     rank=x;
+
+
 }
 
 void MIMPI_Finalize() {
     //TODO
+
+
 
     channels_finalize();
 }

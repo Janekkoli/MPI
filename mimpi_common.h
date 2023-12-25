@@ -6,9 +6,6 @@
 #ifndef MIMPI_COMMON_H
 #define MIMPI_COMMON_H
 
-#define MIMPI_recive_point 140
-#define MIMPI_send_point 180
-
 
 
 #include <assert.h>
@@ -55,7 +52,7 @@ _Noreturn extern void fatal(const char* fmt, ...);
 
 extern int rank,size;
 
-int from_y_to_x(int from,int to);
+int from_y_to_x(int from,int to,bool wr);
 
 
 
