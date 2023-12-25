@@ -48,7 +48,7 @@ _Noreturn extern void fatal(const char* fmt, ...);
 /////////////////////////////////////////////
 // Put your declarations here
 
-
+extern int rank,size;
 
 
 

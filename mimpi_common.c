@@ -5,6 +5,8 @@
 
 #include "mimpi_common.h"
 
+#include "channel.h" //nwm czy moge
+
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -13,6 +15,9 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+int rank=-1;
+int size;
 
 _Noreturn void syserr(const char* fmt, ...)
 {

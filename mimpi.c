@@ -6,24 +6,33 @@
 #include "mimpi.h"
 #include "mimpi_common.h"
 
+
+#include <sys/types.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 void MIMPI_Init(bool enable_deadlock_detection) {
     channels_init();
-
-    TODO
+    size = atoi(getenv("MIMPI_size"));
+    int x;
+    ASSERT_SYS_OK(chrecv(20,&x,sizeof(x)));
+    rank=x;
 }
 
 void MIMPI_Finalize() {
-    TODO
+    //TODO
 
     channels_finalize();
 }
 
 int MIMPI_World_size() {
-    TODO
+    return size;
 }
 
 int MIMPI_World_rank() {
-    TODO
+    return rank;
 }
 
 MIMPI_Retcode MIMPI_Send(
