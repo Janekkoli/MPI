@@ -17,7 +17,7 @@ void MIMPI_Init(bool enable_deadlock_detection) {
     channels_init();
     size = atoi(getenv("MIMPI_size"));
     int x;
-    ASSERT_SYS_OK(chrecv(20,&x,sizeof(x)));
+    ASSERT_SYS_OK(chrecv(MIMPI_recive_point,&x,sizeof(int)));
     rank=x;
 }
 
