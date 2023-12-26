@@ -20,12 +20,38 @@ typedef struct message {
     int tag;
     int source;
 } message;
+message *first,*last;
 
+void mes_init()
+{
+    first=malloc(sizeof(message));
+    last=first;
+}
 
+void add_mes(message *mes)
+{
+    last->next=mes;
+    last=mes;
+}
+
+int search_for(void *data,int count,int source,int tag)
+{
+    message*x=first;
+    while(x->next)
+    {
+        x=x->next;
+        if(x->count==count && x->source==source && x->tag==tag)
+        {
+            data=x->data;
+            return 1;
+        }
+    }
+    return 0;
+}
 
 void* reciver(void* data)
 {
-    
+    message *mes;
     int from=*((int*)data);
     int recive_from=from_y_to_x(from,rank,0),count,source,tag;
     free(data);
@@ -41,6 +67,10 @@ void* reciver(void* data)
         
         //later have to add what happen when not all date is transferd
         ASSERT_SYS_OK(chrecv(recive_from,data,count));
+
+        ASSERT_NOT_NULL(mes = malloc(sizeof(message)));
+        mes->data=data;mes->count=count;mes->source=source;mes->tag=tag;
+        add_mes(mes);
     }
     return 0;
 }
@@ -55,7 +85,10 @@ void MIMPI_Init(bool enable_deadlock_detection) {
     ASSERT_SYS_OK(chrecv(800,&x,sizeof(int)));
     ASSERT_SYS_OK(close(800));
     rank=x;
+    
 
+    mes_init();
+    
 
     //creating threads for every pipe
     pthread_attr_t attr;
@@ -99,13 +132,11 @@ MIMPI_Retcode MIMPI_Send(void const *data, int count, int destination, int tag) 
     return 0;
 }
 
-MIMPI_Retcode MIMPI_Recv(
-    void *data,
-    int count,
-    int source,
-    int tag
-) {
-    TODO
+MIMPI_Retcode MIMPI_Recv(void *data,int count,int source,int tag) {
+    sleep(1);
+    search_for(data,count,source,tag);
+        
+    return 0;
 }
 
 MIMPI_Retcode MIMPI_Barrier() {
