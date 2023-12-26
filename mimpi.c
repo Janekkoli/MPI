@@ -13,11 +13,35 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef struct message {
+    struct message* next;
+    void* data;
+    int count;
+    int tag;
+    int source;
+} message;
+
+
+
 void* reciver(void* data)
 {
+    
     int from=*((int*)data);
+    int recive_from=from_y_to_x(from,rank,0),count,source,tag;
     free(data);
-    printf("%d \n", from);
+    //printf("%d \n", from);
+    int *init_block;
+    ASSERT_NOT_NULL(init_block = malloc(sizeof(int)*3)); //count,source,tag
+    while(true)
+    {
+        ASSERT_SYS_OK(chrecv(recive_from,init_block,sizeof(int)*3));
+        count=init_block[0];source=init_block[1];tag=init_block[2];
+        printf("transfer %d %d %d\n",count,source,tag);
+        ASSERT_NOT_NULL(data = malloc(count));
+        
+        //later have to add what happen when not all date is transferd
+        ASSERT_SYS_OK(chrecv(recive_from,data,count));
+    }
     return 0;
 }
 
@@ -36,11 +60,11 @@ void MIMPI_Init(bool enable_deadlock_detection) {
     //creating threads for every pipe
     pthread_attr_t attr;
     ASSERT_ZERO(pthread_attr_init(&attr));
-
-    threads=malloc(sizeof(pthread_t)*size);
+    int* arg;
+    ASSERT_NOT_NULL(threads=malloc(sizeof(pthread_t)*size));
     for (int i = 0; i < size; i++) {
         if(i==rank) continue;
-        int* arg = malloc(sizeof(int));
+        ASSERT_NOT_NULL(arg = malloc(sizeof(int)));
         *arg = i;
         ASSERT_ZERO(pthread_create(&threads[i], &attr, reciver, arg));
     }
@@ -54,6 +78,7 @@ void MIMPI_Finalize() {
     //killing threads not sure if it is nessecary 
     //for(int i=0;i<size;i++)
     //    if(i!=rank) pthread_cancel(threads[i]); 
+    sleep(1);
     free(threads);
     channels_finalize();
 }
@@ -66,13 +91,12 @@ int MIMPI_World_rank() {
     return rank;
 }
 
-MIMPI_Retcode MIMPI_Send(
-    void const *data,
-    int count,
-    int destination,
-    int tag
-) {
-    TODO
+MIMPI_Retcode MIMPI_Send(void const *data, int count, int destination, int tag) {
+    int init_send[3]={count,rank,tag};
+    ASSERT_SYS_OK(chsend(from_y_to_x(rank,destination,1),&init_send,sizeof(int)*3));
+
+    ASSERT_SYS_OK(chsend(from_y_to_x(rank,destination,1),data,count));
+    return 0;
 }
 
 MIMPI_Retcode MIMPI_Recv(

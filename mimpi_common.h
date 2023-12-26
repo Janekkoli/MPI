@@ -38,6 +38,17 @@
             );                                                                             \
     } while(0)
 
+//assert for malloc propably wrong set errno
+#define ASSERT_NOT_NULL(expr)                                                                  \
+    do {                                                          \
+        if ((expr) == NULL)                                                                   \
+            syserr(                                                                        \
+                "Failed: %s\n\tIn function %s() in %s line %d.\n\tErrno: ",                \
+                #expr, __func__, __FILE__, __LINE__                                        \
+            );                                                                             \
+    } while(0)
+
+
 /* Prints with information about system error (errno) and quits. */
 _Noreturn extern void syserr(const char* fmt, ...);
 
