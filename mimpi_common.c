@@ -16,6 +16,13 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+pthread_mutex_t mutexx; 
+pthread_cond_t waiting;
+
+int wait_count,wait_source,wait_tag;
+
+
+
 int rank=-1;
 int size;
 
@@ -52,4 +59,59 @@ _Noreturn void fatal(const char* fmt, ...)
 int from_y_to_x(int from,int to,bool wr)
 {
     return 16*from+to+24 + 300*wr;
+}
+
+
+
+message *first,*last;
+
+
+
+void mes_init()
+{
+    first=malloc(sizeof(message));
+    last=first;
+    ASSERT_ZERO(pthread_mutex_init(&mutexx, NULL));
+    //ASSERT_ZERO(pthread_cond_init(waiting, NULL));
+}
+
+void add_mes(message *mes)
+{
+    ASSERT_ZERO(pthread_mutex_lock(&mutexx));
+    last->next=mes;
+    last=mes;
+    if(wait_count==mes->count && wait_source==mes->source && wait_tag==mes->tag)
+        ASSERT_ZERO(pthread_cond_signal(&waiting));
+    ASSERT_ZERO(pthread_mutex_unlock(&mutexx));
+}
+
+int search_for(void *data,int count,int source,int tag)
+{
+    ASSERT_ZERO(pthread_mutex_lock(&mutexx));
+    message*x=first;
+    while(x->next)
+    {
+        x=x->next;
+        if(x->count==count && x->source==source && x->tag==tag)
+        {
+            data=x->data;
+            ASSERT_ZERO(pthread_mutex_unlock(&mutexx));
+            return 1;
+        }
+    }
+    wait_count=count;wait_source=source;wait_tag=tag;
+    ASSERT_ZERO(pthread_cond_wait(&waiting, &mutexx));
+    x=first;
+     while(x->next)
+    {
+        x=x->next;
+        if(x->count==count && x->source==source && x->tag==tag)
+        {
+            data=x->data;
+            ASSERT_ZERO(pthread_mutex_unlock(&mutexx));
+            return 1;
+        }
+    }
+    ASSERT_ZERO(pthread_mutex_unlock(&mutexx));
+    return 0;
 }

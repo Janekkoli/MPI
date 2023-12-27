@@ -6,48 +6,15 @@
 #include "mimpi.h"
 #include "mimpi_common.h"
 
-#include <pthread.h>
+
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct message {
-    struct message* next;
-    void* data;
-    int count;
-    int tag;
-    int source;
-} message;
-message *first,*last;
+pthread_t *threads;
 
-void mes_init()
-{
-    first=malloc(sizeof(message));
-    last=first;
-}
-
-void add_mes(message *mes)
-{
-    last->next=mes;
-    last=mes;
-}
-
-int search_for(void *data,int count,int source,int tag)
-{
-    message*x=first;
-    while(x->next)
-    {
-        x=x->next;
-        if(x->count==count && x->source==source && x->tag==tag)
-        {
-            data=x->data;
-            return 1;
-        }
-    }
-    return 0;
-}
 
 void* reciver(void* data)
 {
@@ -75,7 +42,7 @@ void* reciver(void* data)
     return 0;
 }
 
-pthread_t *threads;
+
 
 
 void MIMPI_Init(bool enable_deadlock_detection) {
@@ -86,9 +53,8 @@ void MIMPI_Init(bool enable_deadlock_detection) {
     ASSERT_SYS_OK(close(800));
     rank=x;
     
-
+    //inits
     mes_init();
-    
 
     //creating threads for every pipe
     pthread_attr_t attr;
@@ -111,7 +77,6 @@ void MIMPI_Finalize() {
     //killing threads not sure if it is nessecary 
     //for(int i=0;i<size;i++)
     //    if(i!=rank) pthread_cancel(threads[i]); 
-    sleep(1);
     free(threads);
     channels_finalize();
 }
@@ -125,6 +90,7 @@ int MIMPI_World_rank() {
 }
 
 MIMPI_Retcode MIMPI_Send(void const *data, int count, int destination, int tag) {
+    //have to add retcodes!!!!
     int init_send[3]={count,rank,tag};
     ASSERT_SYS_OK(chsend(from_y_to_x(rank,destination,1),&init_send,sizeof(int)*3));
 
@@ -133,9 +99,8 @@ MIMPI_Retcode MIMPI_Send(void const *data, int count, int destination, int tag) 
 }
 
 MIMPI_Retcode MIMPI_Recv(void *data,int count,int source,int tag) {
-    sleep(1);
+    //have to add retcodes !!!!!!!!!!!
     search_for(data,count,source,tag);
-        
     return 0;
 }
 

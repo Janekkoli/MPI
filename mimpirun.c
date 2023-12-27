@@ -38,6 +38,7 @@ int main(int argc, char* argv[]) {
     pid_t pid;
     for(int i=0;i<size;i++)
     {
+        
         ASSERT_SYS_OK(pid = fork());
         if(!pid) //child
         {
@@ -52,21 +53,20 @@ int main(int argc, char* argv[]) {
         ASSERT_SYS_OK(chsend(from_y_to_x((i+1)%size,i,1),&i,sizeof(int)));
     }
 
-
-
     //wiating for all proceses to end
     int status; //exit status
     pid_t child_pid;
     for (int i = 0; i < size; ++i) {
-        ASSERT_SYS_OK(child_pid = waitpid(-1, &status, 0));
 
-        // printf("Child %d (PID: %d) terminated.\n", i + 1, child_pid);
+        ASSERT_SYS_OK(child_pid = waitpid(-1, &status, 0)); //cos trzeba zrobic :(())
+        //  child_pid = waitpid(-1, &status, 0);
+        //  printf("Child %d (PID: %d) terminated.\n", i + 1, child_pid);
 
-        // if (WIFEXITED(status)) {
-        //     printf("Child %d exited with status %d.\n", i + 1, WEXITSTATUS(status));
-        // } else {
-        //     printf("Child %d exited abnormally.\n", i + 1);
-        // }
+        //  if (WIFEXITED(status)) {
+        //      printf("Child %d exited with status %d.\n", i + 1, WEXITSTATUS(status));
+        //  } else {
+        //      printf("Child %d exited abnormally.\n", i + 1);
+        //  }
     }
 
     for(int i=0;i<size;i++)

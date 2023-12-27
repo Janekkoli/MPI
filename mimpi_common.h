@@ -7,7 +7,7 @@
 #define MIMPI_COMMON_H
 
 
-
+#include <pthread.h>
 #include <assert.h>
 #include <stdbool.h>
 #include <stdnoreturn.h>
@@ -60,11 +60,23 @@ _Noreturn extern void fatal(const char* fmt, ...);
 
 /////////////////////////////////////////////
 // Put your declarations here
+typedef struct message {
+    struct message* next;
+    void* data;
+    int count;
+    int tag;
+    int source;
+} message;
+
 
 extern int rank,size;
 
 int from_y_to_x(int from,int to,bool wr);
 
+void mes_init();
 
+void add_mes(message *mes);
+
+int search_for(void *data,int count,int source,int tag);
 
 #endif // MIMPI_COMMON_H
