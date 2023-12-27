@@ -16,10 +16,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-pthread_mutex_t mutexx; 
-pthread_cond_t waiting;
-
-int wait_count,wait_source,wait_tag;
 
 
 
@@ -63,6 +59,12 @@ int from_y_to_x(int from,int to,bool wr)
 
 
 
+pthread_mutex_t mutexx; 
+pthread_cond_t waiting;
+
+int wait_count,wait_source,wait_tag;
+
+
 message *first,*last;
 
 
@@ -96,6 +98,7 @@ int search_for(void *data,int count,int source,int tag)
         {
             data=x->data;
             ASSERT_ZERO(pthread_mutex_unlock(&mutexx));
+            printf("xxd");
             return 1;
         }
     }
@@ -109,6 +112,8 @@ int search_for(void *data,int count,int source,int tag)
         {
             data=x->data;
             ASSERT_ZERO(pthread_mutex_unlock(&mutexx));
+            int *b = (int*) data;
+            printf("%d\n", *b);
             return 1;
         }
     }

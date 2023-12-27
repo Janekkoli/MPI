@@ -29,12 +29,11 @@ void* reciver(void* data)
     {
         ASSERT_SYS_OK(chrecv(recive_from,init_block,sizeof(int)*3));
         count=init_block[0];source=init_block[1];tag=init_block[2];
-        printf("transfer %d %d %d\n",count,source,tag);
+        printf("transfer count %d from %d to %d tag %d\n",count,source,rank,tag);
         ASSERT_NOT_NULL(data = malloc(count));
         
         //later have to add what happen when not all date is transferd
         ASSERT_SYS_OK(chrecv(recive_from,data,count));
-
         ASSERT_NOT_NULL(mes = malloc(sizeof(message)));
         mes->data=data;mes->count=count;mes->source=source;mes->tag=tag;
         add_mes(mes);
@@ -98,9 +97,14 @@ MIMPI_Retcode MIMPI_Send(void const *data, int count, int destination, int tag) 
     return 0;
 }
 
+
+
+
 MIMPI_Retcode MIMPI_Recv(void *data,int count,int source,int tag) {
     //have to add retcodes !!!!!!!!!!!
     search_for(data,count,source,tag);
+    int *b = (int*) data;
+    printf("%d R\n", *b);
     return 0;
 }
 
