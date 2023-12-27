@@ -110,10 +110,11 @@ int search_for(void *data,int count,int source,int tag)
         x=x->next;
         if(x->count==count && x->source==source && x->tag==tag)
         {
-            data=x->data;
+            //data=x->data;
+            memcpy(data, x->data, count);
+            free(x->data);
+            //usuniecie elementu listy !!!!
             ASSERT_ZERO(pthread_mutex_unlock(&mutexx));
-            int *b = (int*) data;
-            printf("%d\n", *b);
             return 1;
         }
     }

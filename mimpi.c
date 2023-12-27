@@ -34,6 +34,8 @@ void* reciver(void* data)
         
         //later have to add what happen when not all date is transferd
         ASSERT_SYS_OK(chrecv(recive_from,data,count));
+        //int *b = (int*) data;
+        //printf("%d date recived\n", *b);
         ASSERT_NOT_NULL(mes = malloc(sizeof(message)));
         mes->data=data;mes->count=count;mes->source=source;mes->tag=tag;
         add_mes(mes);
@@ -103,8 +105,6 @@ MIMPI_Retcode MIMPI_Send(void const *data, int count, int destination, int tag) 
 MIMPI_Retcode MIMPI_Recv(void *data,int count,int source,int tag) {
     //have to add retcodes !!!!!!!!!!!
     search_for(data,count,source,tag);
-    int *b = (int*) data;
-    printf("%d R\n", *b);
     return 0;
 }
 
