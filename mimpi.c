@@ -49,11 +49,15 @@ void* reciver(void* data)
 void MIMPI_Init(bool enable_deadlock_detection) {
     channels_init();
     size = atoi(getenv("MIMPI_size"));
-    int x;
-    ASSERT_SYS_OK(chrecv(800,&x,sizeof(int)));
-    ASSERT_SYS_OK(close(800));
-    rank=x;
-    
+    //int x;
+    // ASSERT_SYS_OK(chrecv(800,&x,sizeof(int)));
+    // ASSERT_SYS_OK(close(800));
+    // rank=x;
+    char dest[40]="MIMPI_",*x;
+    sprintf(dest+6, "%d", getpid());
+    ASSERT_NOT_NULL(x=getenv(dest));
+    rank=*x-'1';
+    ASSERT_SYS_OK( unsetenv(dest));
     //inits
     mes_init();
 

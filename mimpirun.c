@@ -14,11 +14,10 @@
 
 int main(int argc, char* argv[]) {
     //moge dodac zmienne srodowoskowe zaczynajace sie od MIMPI :)
-    channels_init();
     size = atoi(argv[1]);
     char dest[14]="MIMPI_size=";
     strncat(dest,argv[1],2);
-    putenv(dest);
+    ASSERT_SYS_OK(putenv(dest));
     //setting chanels
     int pipefd[2];
     for(int i=0;i<size;i++)
@@ -38,7 +37,6 @@ int main(int argc, char* argv[]) {
     pid_t pid;
     for(int i=0;i<size;i++)
     {
-        
         ASSERT_SYS_OK(pid = fork());
         if(!pid) //child
         {
@@ -48,9 +46,14 @@ int main(int argc, char* argv[]) {
                     if(i3!=i) ASSERT_SYS_OK(close(from_y_to_x(i2,i3,0)));
                     if(i2!=i) ASSERT_SYS_OK(close(from_y_to_x(i2,i3,1)));}
             ASSERT_SYS_OK(dup2(from_y_to_x((i+1)%size,i,0),800));
+            char dest[40]="MIMPI_";
+            sprintf(dest+6, "%d", getpid());
+            char pom='=';strcat(dest,&pom);
+            pom=i+'1';strcat(dest,&pom);
+            ASSERT_SYS_OK( putenv(dest));
             ASSERT_SYS_OK(execvp(argv[2],argv+2));
         }
-        ASSERT_SYS_OK(chsend(from_y_to_x((i+1)%size,i,1),&i,sizeof(int)));
+        //ASSERT_SYS_OK(chsend(from_y_to_x((i+1)%size,i,1),&i,sizeof(int)));
     }
 
     //wiating for all proceses to end
@@ -73,7 +76,8 @@ int main(int argc, char* argv[]) {
         for(int i2=0;i2<size;i2++)
             if(i==i2) continue;
             else {ASSERT_SYS_OK(close(from_y_to_x(i,i2,0)));ASSERT_SYS_OK(close(from_y_to_x(i,i2,1)));}
-    channels_finalize();
+    char del[]="MIMPI_size";
+    ASSERT_SYS_OK(unsetenv(del));
     return 0;
     //valgrind --tool=memcheck --leak-check=yes --track-origins=yes --track-fds=yes  ./mimpirun 16 examples_build/hello
 }
