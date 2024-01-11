@@ -17,8 +17,6 @@
 #include <unistd.h>
 
 
-
-
 int rank=-1;
 int size;
 
@@ -103,6 +101,14 @@ void process_finished(int rank_p)
     ASSERT_ZERO(pthread_mutex_unlock(&mutexx));
 }
 
+bool is_process_finished(int rank_p)
+{
+    ASSERT_ZERO(pthread_mutex_lock(&mutexx));
+    bool ret=finished_preceses[rank_p];
+    ASSERT_ZERO(pthread_mutex_unlock(&mutexx));
+    return ret;
+}
+
 void mes_init()
 {
     first=malloc(sizeof(message));
@@ -130,12 +136,11 @@ void add_mes(message *mes)
         if(x->count==count && x->source==source && x->tag==tag)\
         {\
             memcpy(data, x->data, count);\
-            free(x->data);\
+            free(x->data); /*Usuniecie elementu listy!!!*/\
             ASSERT_ZERO(pthread_mutex_unlock(&mutexx));\
             return MIMPI_SUCCESS;\
         }\
     }\
-//Usuniecie elementu listy!!!!
 
 
 MIMPI_Retcode search_for(void *data,int count,int source,int tag)

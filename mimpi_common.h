@@ -75,7 +75,7 @@ extern int rank,size;
 int from_y_to_x(int from,int to,bool wr);
 
 void process_finished(int rank);
-
+bool is_process_finished(int rank_p);
 int safe_chrecv(int __fd, void *__buf, size_t __nbytes);
 int safe_chsend(int __fd, const void *__buf, size_t __n);
 

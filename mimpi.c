@@ -88,6 +88,7 @@ void MIMPI_Finalize() {
         ASSERT_SYS_OK(close(from_y_to_x(rank,i,WRITE_PIPE_END)));
     }
     for(int i=0;i<size;i++)
+
     {if(rank==i) continue;
         ASSERT_ZERO(pthread_join(threads[i], NULL));}
 
@@ -111,7 +112,7 @@ int MIMPI_World_rank() {
 MIMPI_Retcode MIMPI_Send(void const *data, int count, int destination, int tag) {
     if(destination==rank)   return MIMPI_ERROR_ATTEMPTED_SELF_OP;
     if(destination<0 || destination>=size) return MIMPI_ERROR_NO_SUCH_RANK;
-    
+    if(is_process_finished(destination)) return MIMPI_ERROR_REMOTE_FINISHED;
     //have to add retcodes!!!!
     int init_send[3]={count,rank,tag};
     safe_chsend(from_y_to_x(rank,destination,1),&init_send,sizeof(int)*3);
