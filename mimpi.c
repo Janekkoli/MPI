@@ -20,20 +20,29 @@ void* reciver(void* data)
 {
     message *mes;
     int from=*((int*)data);
-    int recive_from=from_y_to_x(from,rank,0),count,source,tag;
+    int recive_from=from_y_to_x(from,rank,READ_PIPE_END),count,source,tag;
     free(data);
     //printf("%d \n", from);
     int *init_block;
     ASSERT_NOT_NULL(init_block = malloc(sizeof(int)*3)); //count,source,tag
     while(true)
     {
-        safe_chrecv(recive_from,init_block,sizeof(int)*3);
+        if(!safe_chrecv(recive_from,init_block,sizeof(int)*3)) 
+        {
+            process_finished(from);
+            return 0;
+        }
         count=init_block[0];source=init_block[1];tag=init_block[2];
-        printf("transfer count %d from %d to %d tag %d\n",count,source,rank,tag);
+        //printf("transfer count %d from %d to %d tag %d\n",count,source,rank,tag);
         ASSERT_NOT_NULL(data = malloc(count));
         
         //later have to add what happen when not all date is transferd
-        safe_chrecv(recive_from,data,count);
+        if(!safe_chrecv(recive_from,data,count)) 
+        {
+            free(data);
+            process_finished(from);
+            return 0;
+        }
         //int *b = (int*) data;
         //printf("%d date recived\n", *b);
         ASSERT_NOT_NULL(mes = malloc(sizeof(message)));
@@ -49,10 +58,6 @@ void* reciver(void* data)
 void MIMPI_Init(bool enable_deadlock_detection) {
     channels_init();
     size = atoi(getenv("MIMPI_size"));
-    //int x;
-    // ASSERT_SYS_OK(chrecv(800,&x,sizeof(int)));
-    // ASSERT_SYS_OK(close(800));
-    // rank=x;
     char dest[40]="MIMPI_",*x;
     sprintf(dest+6, "%d", getpid());
     ASSERT_NOT_NULL(x=getenv(dest));
@@ -76,12 +81,21 @@ void MIMPI_Init(bool enable_deadlock_detection) {
 }
 
 void MIMPI_Finalize() {
-    //TODO
 
+    for(int i=0;i<size;i++)
+    {
+        if(i==rank)continue;
+        ASSERT_SYS_OK(close(from_y_to_x(rank,i,WRITE_PIPE_END)));
+    }
+    for(int i=0;i<size;i++)
+    {if(rank==i) continue;
+        ASSERT_ZERO(pthread_join(threads[i], NULL));}
 
-    //killing threads not sure if it is nessecary 
-    //for(int i=0;i<size;i++)
-    //    if(i!=rank) pthread_cancel(threads[i]); 
+    for(int i=0;i<size;i++)
+    {
+        if(i==rank)continue;
+        ASSERT_SYS_OK(close(from_y_to_x(i,rank,READ_PIPE_END)));
+    }
     free(threads);
     channels_finalize();
 }
@@ -95,21 +109,25 @@ int MIMPI_World_rank() {
 }
 
 MIMPI_Retcode MIMPI_Send(void const *data, int count, int destination, int tag) {
+    if(destination==rank)   return MIMPI_ERROR_ATTEMPTED_SELF_OP;
+    if(destination<0 || destination>=size) return MIMPI_ERROR_NO_SUCH_RANK;
+    
     //have to add retcodes!!!!
     int init_send[3]={count,rank,tag};
     safe_chsend(from_y_to_x(rank,destination,1),&init_send,sizeof(int)*3);
 
     safe_chsend(from_y_to_x(rank,destination,1),data,count);
-    return 0;
+    return MIMPI_SUCCESS;
 }
 
 
 
 
 MIMPI_Retcode MIMPI_Recv(void *data,int count,int source,int tag) {
+    if(source==rank)   return MIMPI_ERROR_ATTEMPTED_SELF_OP;
+    if(source<0 || source>=size) return MIMPI_ERROR_NO_SUCH_RANK;
     //have to add retcodes !!!!!!!!!!!
-    search_for(data,count,source,tag);
-    return 0;
+    return search_for(data,count,source,tag);
 }
 
 MIMPI_Retcode MIMPI_Barrier() {

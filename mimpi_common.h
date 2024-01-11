@@ -6,7 +6,7 @@
 #ifndef MIMPI_COMMON_H
 #define MIMPI_COMMON_H
 
-
+#include "mimpi.h"
 #include <pthread.h>
 #include <assert.h>
 #include <stdbool.h>
@@ -56,7 +56,8 @@ _Noreturn extern void syserr(const char* fmt, ...);
 _Noreturn extern void fatal(const char* fmt, ...);
 
 #define TODO fatal("UNIMPLEMENTED function %s", __PRETTY_FUNCTION__);
-
+#define READ_PIPE_END 0
+#define WRITE_PIPE_END 1
 
 /////////////////////////////////////////////
 // Put your declarations here
@@ -73,6 +74,8 @@ extern int rank,size;
 
 int from_y_to_x(int from,int to,bool wr);
 
+void process_finished(int rank);
+
 int safe_chrecv(int __fd, void *__buf, size_t __nbytes);
 int safe_chsend(int __fd, const void *__buf, size_t __n);
 
@@ -80,6 +83,6 @@ void mes_init();
 
 void add_mes(message *mes);
 
-int search_for(void *data,int count,int source,int tag);
+MIMPI_Retcode search_for(void *data,int count,int source,int tag);
 
 #endif // MIMPI_COMMON_H

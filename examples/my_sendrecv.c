@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include "mimpi_err.h"
 int main()
 {
     
@@ -16,9 +17,9 @@ int main()
     char number = 42;
     int const tag = 1;
 
-    MIMPI_Send(&number, sizeof(number), (1 + world_rank)%world_size, tag);
+    ASSERT_MIMPI_OK(MIMPI_Send(&number, sizeof(number), (1 + world_rank)%world_size, tag));
     number=0;
-    MIMPI_Recv(&number, sizeof(number), (world_rank+world_size-1)%world_size, tag);
+    ASSERT_MIMPI_OK(MIMPI_Recv(&number, sizeof(number), (world_rank+world_size-1)%world_size, tag));
     printf("df %d\n",number);
     MIMPI_Finalize();
     return 0;

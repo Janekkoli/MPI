@@ -31,8 +31,6 @@ int main(int argc, char* argv[]) {
             ASSERT_SYS_OK(close(pipefd[1]));
         }
 
-
-
     //printf("%d size\n", size);
     pid_t pid;
     for(int i=0;i<size;i++)
@@ -45,7 +43,6 @@ int main(int argc, char* argv[]) {
                     {if(i3==i2) continue;
                     if(i3!=i) ASSERT_SYS_OK(close(from_y_to_x(i2,i3,0)));
                     if(i2!=i) ASSERT_SYS_OK(close(from_y_to_x(i2,i3,1)));}
-            ASSERT_SYS_OK(dup2(from_y_to_x((i+1)%size,i,0),800));
             char dest[40]="MIMPI_";
             sprintf(dest+6, "%d", getpid());
             char pom='=';strcat(dest,&pom);
@@ -55,6 +52,10 @@ int main(int argc, char* argv[]) {
         }
         //ASSERT_SYS_OK(chsend(from_y_to_x((i+1)%size,i,1),&i,sizeof(int)));
     }
+    for(int i=0;i<size;i++)
+        for(int i2=0;i2<size;i2++)
+            if(i==i2) continue;
+            else {ASSERT_SYS_OK(close(from_y_to_x(i,i2,0)));ASSERT_SYS_OK(close(from_y_to_x(i,i2,1)));}
 
     //wiating for all proceses to end
     int status; //exit status
@@ -72,10 +73,7 @@ int main(int argc, char* argv[]) {
         //  }
     }
 
-    for(int i=0;i<size;i++)
-        for(int i2=0;i2<size;i2++)
-            if(i==i2) continue;
-            else {ASSERT_SYS_OK(close(from_y_to_x(i,i2,0)));ASSERT_SYS_OK(close(from_y_to_x(i,i2,1)));}
+    
     char del[]="MIMPI_size";
     ASSERT_SYS_OK(unsetenv(del));
     return 0;

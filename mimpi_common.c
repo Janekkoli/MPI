@@ -63,10 +63,11 @@ int safe_chrecv(int __fd, void *__buf, size_t __nbytes)
     int ret,recv_bytes=0,to_go=__nbytes;
     while(to_go>0){
     ASSERT_SYS_OK(ret=chrecv(__fd,__buf+recv_bytes,to_go));
+    if(ret==0)  return 0;
     recv_bytes+=ret;
     to_go-=ret;
     }
-    return 0;
+    return __nbytes;
 }
 
 
@@ -75,14 +76,15 @@ int safe_chsend(int __fd, const void *__buf, size_t __n)
     int ret,send_bytes=0,to_go=__n;
     while(to_go>0){
     ASSERT_SYS_OK(ret=chsend(__fd,__buf+send_bytes,to_go));
+    if(ret==0) return 0;
     to_go-=ret;
     send_bytes+=ret;
     }
-    return 0;
+    return __n;
 }
 
 
-pthread_mutex_t mutexx; 
+pthread_mutex_t mutexx;
 pthread_cond_t waiting;
 
 int wait_count,wait_source,wait_tag;
@@ -90,7 +92,16 @@ int wait_count,wait_source,wait_tag;
 
 message *first,*last;
 
+bool finished_preceses[16];
 
+void process_finished(int rank_p)
+{
+    ASSERT_ZERO(pthread_mutex_lock(&mutexx));
+    finished_preceses[rank_p]=true;
+    if(rank_p==wait_source && wait_count>0) 
+        ASSERT_ZERO(pthread_cond_signal(&waiting));
+    ASSERT_ZERO(pthread_mutex_unlock(&mutexx));
+}
 
 void mes_init()
 {
@@ -110,37 +121,37 @@ void add_mes(message *mes)
     ASSERT_ZERO(pthread_mutex_unlock(&mutexx));
 }
 
-int search_for(void *data,int count,int source,int tag)
+
+
+
+#define LIST_CHECK while(x->next)   \
+    {\
+        x=x->next;\
+        if(x->count==count && x->source==source && x->tag==tag)\
+        {\
+            memcpy(data, x->data, count);\
+            free(x->data);\
+            ASSERT_ZERO(pthread_mutex_unlock(&mutexx));\
+            return MIMPI_SUCCESS;\
+        }\
+    }\
+//Usuniecie elementu listy!!!!
+
+
+MIMPI_Retcode search_for(void *data,int count,int source,int tag)
 {
     ASSERT_ZERO(pthread_mutex_lock(&mutexx));
+    
     message*x=first;
-    while(x->next)
-    {
-        x=x->next;
-        if(x->count==count && x->source==source && x->tag==tag)
-        {
-            data=x->data;
-            ASSERT_ZERO(pthread_mutex_unlock(&mutexx));
-            //printf("xxd");
-            return 1;
-        }
-    }
+    LIST_CHECK
+    if(finished_preceses[source])  {ASSERT_ZERO(pthread_mutex_unlock(&mutexx)); return MIMPI_ERROR_REMOTE_FINISHED;}
     wait_count=count;wait_source=source;wait_tag=tag;
     ASSERT_ZERO(pthread_cond_wait(&waiting, &mutexx));
+    wait_count=0;
+
     x=first;
-     while(x->next)
-    {
-        x=x->next;
-        if(x->count==count && x->source==source && x->tag==tag)
-        {
-            //data=x->data;
-            memcpy(data, x->data, count);
-            free(x->data);
-            //usuniecie elementu listy !!!!
-            ASSERT_ZERO(pthread_mutex_unlock(&mutexx));
-            return 1;
-        }
-    }
+    LIST_CHECK
+    if(finished_preceses[source])  {ASSERT_ZERO(pthread_mutex_unlock(&mutexx)); return MIMPI_ERROR_REMOTE_FINISHED;}
     ASSERT_ZERO(pthread_mutex_unlock(&mutexx));
-    return 0;
+    return MIMPI_ERROR_DEADLOCK_DETECTED; //lol xdd
 }
