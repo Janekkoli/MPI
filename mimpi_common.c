@@ -58,6 +58,29 @@ int from_y_to_x(int from,int to,bool wr)
 }
 
 
+int safe_chrecv(int __fd, void *__buf, size_t __nbytes)
+{
+    int ret,recv_bytes=0,to_go=__nbytes;
+    while(to_go>0){
+    ASSERT_SYS_OK(ret=chrecv(__fd,__buf+recv_bytes,to_go));
+    recv_bytes+=ret;
+    to_go-=ret;
+    }
+    return 0;
+}
+
+
+int safe_chsend(int __fd, const void *__buf, size_t __n)
+{
+    int ret,send_bytes=0,to_go=__n;
+    while(to_go>0){
+    ASSERT_SYS_OK(ret=chsend(__fd,__buf+send_bytes,to_go));
+    to_go-=ret;
+    send_bytes+=ret;
+    }
+    return 0;
+}
+
 
 pthread_mutex_t mutexx; 
 pthread_cond_t waiting;
@@ -98,7 +121,7 @@ int search_for(void *data,int count,int source,int tag)
         {
             data=x->data;
             ASSERT_ZERO(pthread_mutex_unlock(&mutexx));
-            printf("xxd");
+            //printf("xxd");
             return 1;
         }
     }

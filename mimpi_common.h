@@ -73,6 +73,9 @@ extern int rank,size;
 
 int from_y_to_x(int from,int to,bool wr);
 
+int safe_chrecv(int __fd, void *__buf, size_t __nbytes);
+int safe_chsend(int __fd, const void *__buf, size_t __n);
+
 void mes_init();
 
 void add_mes(message *mes);

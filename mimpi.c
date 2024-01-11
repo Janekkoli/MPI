@@ -27,13 +27,13 @@ void* reciver(void* data)
     ASSERT_NOT_NULL(init_block = malloc(sizeof(int)*3)); //count,source,tag
     while(true)
     {
-        ASSERT_SYS_OK(chrecv(recive_from,init_block,sizeof(int)*3));
+        safe_chrecv(recive_from,init_block,sizeof(int)*3);
         count=init_block[0];source=init_block[1];tag=init_block[2];
         printf("transfer count %d from %d to %d tag %d\n",count,source,rank,tag);
         ASSERT_NOT_NULL(data = malloc(count));
         
         //later have to add what happen when not all date is transferd
-        ASSERT_SYS_OK(chrecv(recive_from,data,count));
+        safe_chrecv(recive_from,data,count);
         //int *b = (int*) data;
         //printf("%d date recived\n", *b);
         ASSERT_NOT_NULL(mes = malloc(sizeof(message)));
@@ -97,9 +97,9 @@ int MIMPI_World_rank() {
 MIMPI_Retcode MIMPI_Send(void const *data, int count, int destination, int tag) {
     //have to add retcodes!!!!
     int init_send[3]={count,rank,tag};
-    ASSERT_SYS_OK(chsend(from_y_to_x(rank,destination,1),&init_send,sizeof(int)*3));
+    safe_chsend(from_y_to_x(rank,destination,1),&init_send,sizeof(int)*3);
 
-    ASSERT_SYS_OK(chsend(from_y_to_x(rank,destination,1),data,count));
+    safe_chsend(from_y_to_x(rank,destination,1),data,count);
     return 0;
 }
 
